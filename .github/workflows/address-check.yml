@@ -1,0 +1,25 @@
+name: Address checker CLI
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  address-checker:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run unit tests
+        run: python -m unittest discover -s tests -v
+      - name: Smoke-test CLI contract
+        run: |
+          ./zaddrcheck "" | python -c 'import json,sys; x=json.load(sys.stdin); assert x == {"input":"", "valid":False, "type":"invalid"}'
+          ./zaddrcheck 't1goiSyw2JinFCmUnfiwwp72LEZzD42TyYu' | python -c 'import json,sys; x=json.load(sys.stdin); assert x["valid"] and x["type"] == "transparent"'
+          ./zaddrcheck 'zs1cpf4prtmnqpg6x2ngcrwelu9a39z9l9lqukq9fwagnaqrknk34a7n3szwxpjuxfjdxkuzykel53' | python -c 'import json,sys; x=json.load(sys.stdin); assert x["valid"] and x["type"] == "sapling"'
+          ./zaddrcheck 'u1cysntkxwt0h4sahp7rhj7u27pgc2ga7685ekf65g0d5ht5glkfm4zkumhvkd2zg2pdrgv3mrwq2x3vw2yl5u7zef3cr2nqwrzu7v2dsa' | python -c 'import json,sys; x=json.load(sys.stdin); assert x["valid"] and x["type"] == "unified"'
